@@ -23,10 +23,10 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.20.0",
     "pino": "^9.6.0",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.3",
-    "mysql2": "^3.12.0"
+    "socket.io-client": "^4.8.3"
   }
 }
