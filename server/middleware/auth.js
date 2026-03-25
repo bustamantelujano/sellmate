@@ -18,7 +18,7 @@ function generateToken(user, tenantId = null) {
   );
 }
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token requerido' });
@@ -26,7 +26,7 @@ function authMiddleware(req, res, next) {
   try {
     const token = header.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = dbGet('SELECT id, email, name, role, active, tenant_id, super_admin FROM users WHERE id = ?', [decoded.id]);
+    const user = await dbGet('SELECT id, email, name, role, active, tenant_id, super_admin FROM users WHERE id = ?', [decoded.id]);
     if (!user || !user.active) {
       return res.status(401).json({ error: 'Usuario no válido' });
     }
@@ -48,12 +48,12 @@ function adminOnly(req, res, next) {
 }
 
 // Requires tenant context (tenantId must be set)
-function requireTenant(req, res, next) {
+async function requireTenant(req, res, next) {
   if (!req.tenantId) {
     return res.status(403).json({ error: 'Contexto de tenant requerido' });
   }
   // Verify tenant exists and is active
-  const tenant = dbGet('SELECT id, active FROM tenants WHERE id = ?', [req.tenantId]);
+  const tenant = await dbGet('SELECT id, active FROM tenants WHERE id = ?', [req.tenantId]);
   if (!tenant) {
     return res.status(404).json({ error: 'Tenant no encontrado' });
   }
