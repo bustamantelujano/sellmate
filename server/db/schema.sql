@@ -191,3 +191,30 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (tenant_id) REFERENCES tenants(id)
 );
+
+-- Tenant modules (which features are enabled per tenant)
+CREATE TABLE IF NOT EXISTS tenant_modules (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT NOT NULL,
+  module_key VARCHAR(50) NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  config TEXT DEFAULT NULL,
+  UNIQUE KEY uq_tenant_module (tenant_id, module_key),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+-- AI usage tracking per tenant
+CREATE TABLE IF NOT EXISTS ai_usage (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  model VARCHAR(100) NOT NULL,
+  input_tokens INT NOT NULL DEFAULT 0,
+  output_tokens INT NOT NULL DEFAULT 0,
+  total_tokens INT NOT NULL DEFAULT 0,
+  cost_estimate DOUBLE NOT NULL DEFAULT 0,
+  request_type VARCHAR(50) NOT NULL DEFAULT 'chat',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  INDEX idx_ai_usage_tenant_date (tenant_id, created_at)
+);

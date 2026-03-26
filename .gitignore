@@ -5,3 +5,4 @@ node_modules/
 client/dist/
 auth_info_baileys*/
 .claude/
+.atl/

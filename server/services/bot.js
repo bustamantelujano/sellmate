@@ -94,6 +94,10 @@ async function handleIncomingMessage(tenantId, phoneNumber, contactName, message
     const business = await dbGet('SELECT * FROM business_info WHERE tenant_id = ?', [tenantId]);
     const products = await dbAll('SELECT name, description, price, category, stock FROM products WHERE tenant_id = ? AND active = 1', [tenantId]);
 
+    // Fetch enabled modules for this tenant
+    const enabledModules = await dbAll('SELECT module_key FROM tenant_modules WHERE tenant_id = ? AND enabled = 1', [tenantId]);
+    const moduleKeys = enabledModules.map(m => m.module_key);
+
     const history = (await dbAll(
       'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp DESC LIMIT 15',
       [conversation.id]
@@ -137,30 +141,62 @@ Cuando el cliente envia una imagen, analízala cuidadosamente.
 - Si la imagen muestra un producto o un problema, describelo y ofrece ayuda relevante.
 - Siempre indica que tu estimacion de dimensiones es aproximada y puede variar.
 
-AGENDAMIENTO DE CITAS:
+${moduleKeys.includes('appointments') ? `AGENDAMIENTO DE CITAS:
 Si el cliente quiere agendar una cita o servicio:
 1. Pregunta por fecha y hora preferida si no las menciono.
 2. Confirma los datos con el cliente antes de agendar.
 3. Cuando el cliente CONFIRME, incluye el campo "appointment" en tu respuesta JSON.
-4. Si el cliente no quiere cita o aun no ha confirmado, usa "appointment": null.
+4. Si el cliente no quiere cita o aun no ha confirmado, usa "appointment": null.` : ''}
+
+${moduleKeys.includes('orders') ? `ORDENES / PEDIDOS:
+Si el cliente quiere hacer un pedido:
+1. Ayudalo a elegir productos del catalogo.
+2. Confirma los items, cantidades y el total.
+3. Cuando el cliente CONFIRME el pedido, incluye el campo "order" en tu respuesta JSON.
+4. Si el cliente no quiere ordenar o aun no ha confirmado, usa "order": null.` : ''}
+
+${moduleKeys.includes('quotes') ? `COTIZACIONES:
+Si el cliente pide una cotizacion:
+1. Identifica los productos o servicios que necesita.
+2. Calcula el total basandote en los precios del catalogo.
+3. Presenta la cotizacion de forma clara con desglose de items y precios.
+4. Incluye el campo "quote" en tu respuesta JSON con los detalles.
+5. Si no es una cotizacion, usa "quote": null.` : ''}
 
 FORMATO DE RESPUESTA:
 Debes responder SIEMPRE en formato JSON valido con esta estructura:
 {
   "response": "Tu mensaje al cliente aqui",
   "topic": "categoria_del_tema",
-  "emoji_reaction": "emoji_o_null",
-  "appointment": null
+  "emoji_reaction": "emoji_o_null"${moduleKeys.includes('appointments') ? `,
+  "appointment": null` : ''}${moduleKeys.includes('orders') ? `,
+  "order": null` : ''}${moduleKeys.includes('quotes') ? `,
+  "quote": null` : ''}
 }
 
-Cuando el cliente CONFIRME una cita, cambia "appointment" a:
+${moduleKeys.includes('appointments') ? `Cuando el cliente CONFIRME una cita, cambia "appointment" a:
 "appointment": {
   "title": "Nombre del servicio o cita",
   "description": "Detalles adicionales",
   "date": "YYYY-MM-DD",
   "time": "HH:MM",
   "duration_minutes": 60
-}
+}` : ''}
+
+${moduleKeys.includes('orders') ? `Cuando el cliente CONFIRME un pedido, cambia "order" a:
+"order": {
+  "items": [{"name": "Producto", "quantity": 1, "unit_price": 100}],
+  "total": 100,
+  "notes": "Notas adicionales del pedido"
+}` : ''}
+
+${moduleKeys.includes('quotes') ? `Cuando generes una cotizacion, cambia "quote" a:
+"quote": {
+  "items": [{"name": "Producto o servicio", "quantity": 1, "unit_price": 100}],
+  "total": 100,
+  "valid_days": 15,
+  "notes": "Condiciones o notas"
+}` : ''}
 
 Para "topic", clasifica la conversacion en UNA de estas categorias (en espanol):
 - "cotizacion" (cuando el cliente pide precios o cotizaciones)
@@ -208,7 +244,7 @@ IMPORTANTE: Tu respuesta debe ser UNICAMENTE el JSON, sin texto adicional, sin b
       };
     }
 
-    const aiResult = await generateResponse(systemPrompt, chatHistory, settings, toolCtx);
+    const aiResult = await generateResponse(tenantId, systemPrompt, chatHistory, settings, toolCtx);
 
     // Stop typing
     await wm.sendPresence(tenantId, phoneNumber, 'paused');
@@ -223,8 +259,8 @@ IMPORTANTE: Tu respuesta debe ser UNICAMENTE el JSON, sin texto adicional, sin b
       await dbRun('UPDATE conversations SET topic = ? WHERE id = ?', [newTopic, conversation.id]);
     }
 
-    // Create appointment if AI scheduled one
-    if (appointmentData && appointmentData.date && appointmentData.time) {
+    // Create appointment if AI scheduled one (only when appointments module is enabled)
+    if (moduleKeys.includes('appointments') && appointmentData && appointmentData.date && appointmentData.time) {
       try {
         const apptResult = await dbRun(
           `INSERT INTO appointments (tenant_id, conversation_id, phone_number, contact_name, title, description, date, time, duration_minutes, created_by)

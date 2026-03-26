@@ -49,7 +49,7 @@ ${products.map(p => `- ${p.name}: $${p.price} - ${p.description}`).join('\n')}`;
       content: m.content
     }));
 
-    const suggestion = await generateResponse(systemPrompt, chatHistory, settings);
+    const suggestion = await generateResponse(req.tenantId, systemPrompt, chatHistory, settings);
     res.json({ suggestion });
   } catch (err) {
     console.error('Copilot error:', err);

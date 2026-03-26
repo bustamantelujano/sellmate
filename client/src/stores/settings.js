@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '../lib/api'
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -8,6 +8,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const qrCode = ref('')
   const waError = ref('')
   const onlineStatus = ref(true)
+  const modules = ref({})
+
+  const setupCompleted = computed(() => settings.value?.setup_completed === 1)
 
   async function fetchSettings() {
     const { data } = await api.get('/settings')
@@ -28,5 +31,22 @@ export const useSettingsStore = defineStore('settings', () => {
     onlineStatus.value = newStatus
   }
 
-  return { settings, whatsappStatus, qrCode, waError, onlineStatus, fetchSettings, updateSettings, toggleOnlineStatus }
+  async function fetchModules() {
+    try {
+      const { data } = await api.get('/modules')
+      modules.value = data.modules || {}
+    } catch (e) {
+      modules.value = {}
+    }
+  }
+
+  async function toggleModule(key, enabled) {
+    await api.put(`/modules/${key}`, { enabled })
+    modules.value = { ...modules.value, [key]: enabled }
+  }
+
+  return {
+    settings, whatsappStatus, qrCode, waError, onlineStatus, modules, setupCompleted,
+    fetchSettings, updateSettings, toggleOnlineStatus, fetchModules, toggleModule
+  }
 })

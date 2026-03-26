@@ -1,4 +1,5 @@
 const https = require('https');
+const { dbRun } = require('../config/database');
 
 /**
  * Configurable AI provider abstraction.
@@ -7,6 +8,30 @@ const https = require('https');
  */
 
 const MAX_TOOL_ROUNDS = 5; // Max tool-use iterations to prevent infinite loops
+
+// ────────────────── Usage Tracking ──────────────────
+
+async function trackUsage(tenantId, provider, model, inputTokens, outputTokens, requestType = 'chat') {
+  const totalTokens = inputTokens + outputTokens;
+  // Rough cost estimates per 1M tokens
+  const costs = {
+    'gpt-4o-mini': { input: 0.15, output: 0.60 },
+    'gpt-4o': { input: 2.50, output: 10.00 },
+    'claude-sonnet-4-6': { input: 3.00, output: 15.00 },
+    'claude-haiku-4-5': { input: 0.80, output: 4.00 },
+  };
+  const rate = costs[model] || { input: 1.00, output: 3.00 };
+  const costEstimate = (inputTokens * rate.input + outputTokens * rate.output) / 1_000_000;
+
+  try {
+    await dbRun(
+      'INSERT INTO ai_usage (tenant_id, provider, model, input_tokens, output_tokens, total_tokens, cost_estimate, request_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [tenantId, provider, model, inputTokens, outputTokens, totalTokens, costEstimate, requestType]
+    );
+  } catch (e) {
+    console.error('Error tracking AI usage:', e.message);
+  }
+}
 
 function buildRequestOptions(settings) {
   const provider = settings.ai_provider || 'openai';
@@ -106,20 +131,21 @@ function parseStructuredResponse(text) {
  * @param {Map}   [toolCtx.toolMap] - qualifiedName → {serverId, toolName}
  * @param {function} [toolCtx.executeTool] - async (name, args, toolMap) => string
  */
-async function generateResponse(systemPrompt, chatHistory, settings, toolCtx) {
+async function generateResponse(tenantId, systemPrompt, chatHistory, settings, toolCtx) {
   const provider = settings.ai_provider || 'openai';
 
   if (provider === 'anthropic') {
-    return _anthropicLoop(systemPrompt, chatHistory, settings, toolCtx);
+    return _anthropicLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx);
   }
   // OpenAI / Custom (OpenAI-compatible)
-  return _openaiLoop(systemPrompt, chatHistory, settings, toolCtx);
+  return _openaiLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx);
 }
 
 // ────────────────── OpenAI Tool Calling Loop ──────────────────
 
-async function _openaiLoop(systemPrompt, chatHistory, settings, toolCtx) {
+async function _openaiLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx) {
   const opts = buildRequestOptions(settings);
+  const provider = settings.ai_provider || 'openai';
   const hasTools = toolCtx && toolCtx.openaiTools && toolCtx.openaiTools.length > 0;
   const hasImages = chatHistory.some(m => Array.isArray(m.content));
 
@@ -141,6 +167,13 @@ async function _openaiLoop(systemPrompt, chatHistory, settings, toolCtx) {
 
     const result = await makeRequest(opts, body);
     if (result.error) throw new Error(result.error.message);
+
+    // Track usage for each round
+    if (tenantId && result.usage) {
+      const inputTokens = result.usage.prompt_tokens || 0;
+      const outputTokens = result.usage.completion_tokens || 0;
+      trackUsage(tenantId, provider, opts.model, inputTokens, outputTokens, 'chat').catch(() => {});
+    }
 
     const choice = result.choices?.[0];
     if (!choice) throw new Error('No response from AI');
@@ -184,7 +217,7 @@ async function _openaiLoop(systemPrompt, chatHistory, settings, toolCtx) {
 
 // ────────────────── Anthropic Tool Calling Loop ──────────────────
 
-async function _anthropicLoop(systemPrompt, chatHistory, settings, toolCtx) {
+async function _anthropicLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx) {
   const opts = buildRequestOptions(settings);
   const hasTools = toolCtx && toolCtx.anthropicTools && toolCtx.anthropicTools.length > 0;
   const hasImages = chatHistory.some(m => Array.isArray(m.content));
@@ -230,6 +263,13 @@ async function _anthropicLoop(systemPrompt, chatHistory, settings, toolCtx) {
 
     const result = await makeRequest(opts, body);
     if (result.error) throw new Error(result.error.message);
+
+    // Track usage for each round
+    if (tenantId && result.usage) {
+      const inputTokens = result.usage.input_tokens || 0;
+      const outputTokens = result.usage.output_tokens || 0;
+      trackUsage(tenantId, 'anthropic', opts.model, inputTokens, outputTokens, 'chat').catch(() => {});
+    }
 
     const content = result.content;
     if (!content || !Array.isArray(content)) {
@@ -299,4 +339,60 @@ function _cleanAnthropicMessages(chatHistory) {
   return cleaned.length > 0 ? cleaned : [{ role: 'user', content: 'Hola' }];
 }
 
-module.exports = { generateResponse };
+// ────────────────── Image Generation (DALL-E) ──────────────────
+
+async function generateImage(tenantId, prompt, settings, size = '1024x1024') {
+  if (settings.ai_provider !== 'openai' && settings.ai_provider !== 'custom') {
+    throw new Error('La generación de imágenes solo está disponible con OpenAI');
+  }
+
+  const apiKey = settings.ai_api_key;
+  const endpoint = settings.ai_provider === 'custom' ? settings.ai_custom_endpoint : 'https://api.openai.com';
+
+  return new Promise((resolve, reject) => {
+    const url = new URL(endpoint + '/v1/images/generations');
+    const postData = JSON.stringify({
+      model: 'dall-e-3',
+      prompt,
+      n: 1,
+      size,
+      response_format: 'url'
+    });
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 443,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) return reject(new Error(parsed.error.message));
+
+          // Track usage (DALL-E pricing is per image, not tokens)
+          trackUsage(tenantId, 'openai', 'dall-e-3', 0, 0, 'image_generation').catch(() => {});
+
+          resolve(parsed.data[0]);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
+module.exports = { generateResponse, parseStructuredResponse, generateImage };

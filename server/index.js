@@ -32,6 +32,8 @@ initDb().then(() => {
   app.use('/api/copilot', require('./routes/copilot'));
   app.use('/api/appointments', require('./routes/appointments'));
   app.use('/api/followups', require('./routes/followups'));
+  app.use('/api/modules', require('./routes/modules'));
+  app.use('/api/usage', require('./routes/usage'));
 
   // WhatsApp routes (tenant-aware)
   const { authMiddleware, adminOnly, requireTenant } = require('./middleware/auth');

@@ -52,6 +52,9 @@ async function initDb() {
       "ALTER TABLE mcp_servers ADD COLUMN tenant_id INT, ADD CONSTRAINT fk_mcp_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)",
       "ALTER TABLE settings ADD COLUMN tenant_id INT, ADD CONSTRAINT fk_settings_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)",
       "ALTER TABLE business_info ADD COLUMN tenant_id INT, ADD CONSTRAINT fk_biz_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)",
+      // Module system migrations
+      "ALTER TABLE settings ADD COLUMN business_type VARCHAR(50) DEFAULT NULL",
+      "ALTER TABLE settings ADD COLUMN setup_completed TINYINT(1) NOT NULL DEFAULT 0",
     ];
     for (const sql of migrations) {
       try { await pool.execute(sql); } catch (e) { /* already exists */ }

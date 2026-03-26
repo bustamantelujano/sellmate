@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { computed, h } from 'vue'
+import { computed, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
@@ -74,6 +74,13 @@ const auth = useAuthStore()
 const settingsStore = useSettingsStore()
 const theme = useThemeStore()
 const router = useRouter()
+
+// Fetch modules on mount
+onMounted(async () => {
+  try {
+    await settingsStore.fetchModules()
+  } catch (e) { /* ignore */ }
+})
 
 // SVG icon components (Flowbite/Heroicons style)
 const icons = {
@@ -101,21 +108,37 @@ const icons = {
   settings: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }),
     h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' })
+  ]),
+  modules: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' })
+  ]),
+  setup: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' })
   ])
 }
 
 const navItems = computed(() => {
+  const mods = settingsStore.modules || {}
   const items = [
     { path: '/', iconComponent: icons.dashboard, label: 'Dashboard' },
     { path: '/conversations', iconComponent: icons.conversations, label: 'Conversaciones' },
     { path: '/products', iconComponent: icons.products, label: 'Productos' },
-    { path: '/business', iconComponent: icons.business, label: 'Negocio' },
-    { path: '/appointments', iconComponent: icons.appointments, label: 'Citas' },
-    { path: '/followups', iconComponent: icons.followups, label: 'Fidelizacion' }
+    { path: '/business', iconComponent: icons.business, label: 'Negocio' }
   ]
+
+  // Module-conditional items
+  if (mods.appointments) {
+    items.push({ path: '/appointments', iconComponent: icons.appointments, label: 'Citas' })
+  }
+  if (mods.followups) {
+    items.push({ path: '/followups', iconComponent: icons.followups, label: 'Fidelizacion' })
+  }
+
   if (auth.isAdmin) {
     items.push(
       { path: '/agents', iconComponent: icons.agents, label: 'Agentes' },
+      { path: '/modules', iconComponent: icons.modules, label: 'Modulos' },
+      { path: '/setup', iconComponent: icons.setup, label: 'Configurar' },
       { path: '/settings', iconComponent: icons.settings, label: 'Ajustes' }
     )
   }

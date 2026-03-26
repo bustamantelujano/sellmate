@@ -90,31 +90,15 @@
           </div>
         </div>
 
-        <!-- AI Provider -->
+        <!-- AI Provider Link -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 class="text-base font-semibold text-gray-800 dark:text-white mb-4">Configuracion de IA</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proveedor</label>
-              <select v-model="form.ai_provider" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500">
-                <option value="openai">OpenAI (GPT)</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="custom">Custom (OpenAI-compatible)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-              <input v-model="form.ai_api_key" type="password" placeholder="sk-..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modelo</label>
-              <input v-model="form.ai_model" placeholder="gpt-4o-mini" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
-            </div>
-            <div v-if="form.ai_provider === 'custom'">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Endpoint personalizado</label>
-              <input v-model="form.ai_custom_endpoint" placeholder="https://your-api.com/v1/chat/completions" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
-            </div>
-          </div>
+          <h3 class="text-base font-semibold text-gray-800 dark:text-white mb-2">Configuracion de IA</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Proveedor: {{ form.ai_provider || 'No configurado' }} {{ form.ai_model ? '(' + form.ai_model + ')' : '' }}</p>
+          <router-link to="/ai-settings"
+            class="inline-flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
+            Configuracion avanzada de IA
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </router-link>
         </div>
 
         <!-- Save Button -->
