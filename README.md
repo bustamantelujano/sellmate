@@ -50,7 +50,7 @@ SellMate conecta tu negocio con tus clientes a traves de WhatsApp, automatizando
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/sellmate.git
+git clone https://github.com/cebasic/sellmate.git
 cd sellmate
 ```
 
@@ -189,34 +189,129 @@ Los modulos se configuran durante el wizard inicial o desde la seccion de Ajuste
 
 ```
 sellmate/
-├── server/                  # Backend Express.js
-│   ├── index.js             # Entry point
+├── server/
+│   ├── index.js                # Entry point (Express + Socket.IO + static serving)
 │   ├── config/
-│   │   └── database.js      # Conexion MariaDB y migraciones
+│   │   └── database.js         # MySQL pool, schema init, auto-migrations
+│   ├── db/
+│   │   └── schema.sql          # Full schema (22 tables, multi-tenant)
+│   ├── middleware/
+│   │   └── auth.js             # JWT auth, tenant context, role checks
 │   ├── services/
-│   │   ├── ai.js            # Abstraccion de proveedores de IA
-│   │   ├── bot.js           # Logica del bot y system prompt
-│   │   ├── whatsapp.js      # Conexion Baileys (WhatsApp Web)
-│   │   └── mcp.js           # Integracion Model Context Protocol
-│   └── routes/              # Rutas API REST
-├── client/                  # Frontend Vue 3
+│   │   ├── ai.js               # Multi-provider AI abstraction + tool calling loops
+│   │   ├── bot.js              # Message handling, system prompt builder
+│   │   ├── whatsapp.js         # Baileys manager (per-tenant connections)
+│   │   ├── mcp.js              # Model Context Protocol (stdio/SSE)
+│   │   ├── socket.js           # Real-time event hub
+│   │   ├── followups.js        # Cron job: loyalty messaging (hourly)
+│   │   └── dbAuthState.js      # WhatsApp session persistence in DB
+│   └── routes/
+│       ├── auth.js             # Register, login, agents CRUD
+│       ├── conversations.js    # Chat history, delete, clear
+│       ├── products.js         # Catalog CRUD
+│       ├── clients.js          # Contact database
+│       ├── orders.js           # Order lifecycle management
+│       ├── appointments.js     # Calendar + public confirmation links
+│       ├── followups.js        # Loyalty rules engine
+│       ├── settings.js         # Bot config, AI keys CRUD, test-ai
+│       ├── business.js         # Business info management
+│       ├── modules.js          # Feature flags + presets
+│       ├── copilot.js          # AI suggestions for human agents
+│       └── usage.js            # Token tracking + cost analytics
+├── client/
 │   ├── src/
-│   │   ├── views/           # Paginas (Dashboard, Conversations, etc.)
-│   │   ├── components/      # Componentes reutilizables
-│   │   ├── stores/          # Pinia stores
-│   │   ├── composables/     # Composables (Socket.IO, etc.)
-│   │   └── router/          # Vue Router
-│   └── tailwind.config.js   # Configuracion Tailwind
-├── package.json
-└── .env.example
+│   │   ├── App.vue             # Root (Sidebar + TopBar layout)
+│   │   ├── router/index.js     # 18 routes
+│   │   ├── views/              # Pages
+│   │   │   ├── Landing.vue     # Public marketing page
+│   │   │   ├── Login.vue       # Auth
+│   │   │   ├── SetupWizard.vue # Onboarding wizard
+│   │   │   ├── Dashboard.vue   # Metrics overview
+│   │   │   ├── ChatView.vue    # Live chat (bot/human modes)
+│   │   │   ├── Conversations.vue
+│   │   │   ├── Clients.vue     # Contact CRM
+│   │   │   ├── Orders.vue      # Order management
+│   │   │   ├── Appointments.vue # Calendar (day/week/month)
+│   │   │   ├── Settings.vue    # All settings + AI key management
+│   │   │   ├── AIUsage.vue     # Token analytics dashboard (chart.js)
+│   │   │   └── ...
+│   │   ├── components/
+│   │   │   ├── Sidebar.vue
+│   │   │   ├── TopBar.vue
+│   │   │   └── calendar/       # Day, Week, Month, DetailModal
+│   │   ├── stores/             # Pinia (auth, theme, settings, notifications)
+│   │   ├── composables/        # useSocket.js
+│   │   └── lib/                # Utilities (api.js, phone.js)
+│   ├── vite.config.js          # Proxy /api + /socket.io to backend
+│   └── tailwind.config.js
+├── Procfile                    # web: node server/index.js
+├── .env.example
+└── package.json                # Root + postinstall + dev scripts
 ```
 
-**Flujo principal:**
-1. Un cliente envia un mensaje por WhatsApp
-2. Baileys recibe el mensaje y lo pasa al servicio de bot
-3. El bot construye el contexto (historial, datos del negocio, productos) y llama a la IA
-4. La IA responde con un JSON estructurado (respuesta, topic, emoji)
-5. El bot envia la respuesta por WhatsApp y actualiza el dashboard en tiempo real via Socket.IO
+### Flujo de un mensaje
+
+```
+WhatsApp → Baileys → bot.js → ai.js → [OpenAI/Anthropic/Gemini]
+                                           ↓
+                                    JSON estructurado
+                                    {response, topic, emoji, order?, appointment?}
+                                           ↓
+                        ┌──────────────────┼──────────────────┐
+                        ↓                  ↓                  ↓
+                  Envia respuesta    Crea orden/cita    Clasifica topic
+                  por WhatsApp       en la DB           en conversacion
+                        ↓
+                  Socket.IO → Dashboard actualizado en tiempo real
+```
+
+### Multi-tenant
+
+Cada tenant (negocio) tiene datos completamente aislados:
+- Su propia conexion WhatsApp (instancia Baileys independiente)
+- Sus propios productos, conversaciones, clientes, ordenes
+- Sus propias API keys de IA y configuracion
+- JWT tokens incluyen `tenant_id` para filtrar todo
+
+### Base de datos
+
+22 tablas en MariaDB/MySQL con migraciones automaticas al iniciar:
+
+| Tabla | Descripcion |
+|-------|------------|
+| `tenants` | Negocios registrados |
+| `users` | Usuarios con roles (admin, agent, super_admin) |
+| `settings` | Config del bot y IA activa por tenant |
+| `business_info` | Datos del negocio (nombre, horario, direccion) |
+| `products` | Catalogo con precios, stock, imagenes |
+| `conversations` | Conversaciones WhatsApp (status: bot/human/closed) |
+| `messages` | Historial de mensajes con soporte de imagenes |
+| `clients` | Base de contactos con tags y metricas |
+| `orders` | Pedidos con ciclo de vida completo |
+| `appointments` | Citas con tokens de confirmacion publica |
+| `follow_up_rules` | Reglas de fidelizacion automatica |
+| `ai_keys` | Multiples API keys por tenant |
+| `ai_usage` | Tracking de tokens y costos por request |
+| `tenant_modules` | Feature flags por negocio |
+| `mcp_servers` | Servidores MCP configurados |
+| `wa_auth_state` | Sesion WhatsApp persistida en DB |
+| ... | Y mas |
+
+### API REST
+
+Todos los endpoints requieren JWT (`Authorization: Bearer <token>`) y estan scoped por tenant.
+
+| Grupo | Endpoints principales |
+|-------|----------------------|
+| **Auth** | `POST /api/auth/register`, `POST /api/auth/login` |
+| **Conversations** | `GET /api/conversations`, `GET /api/conversations/:id/messages` |
+| **Products** | CRUD en `/api/products` |
+| **Clients** | CRUD en `/api/clients` |
+| **Orders** | CRUD + `PUT /api/orders/:id/status` |
+| **Appointments** | CRUD + `GET /api/cita/:token` (publico) |
+| **Settings** | `GET/PUT /api/settings`, CRUD `/api/settings/ai-keys`, `POST /api/settings/test-ai` |
+| **AI Usage** | `GET /api/usage`, `GET /api/usage/detailed`, `GET /api/usage/by-provider` |
+| **Modules** | `GET /api/modules`, `PUT /api/modules/:key` |
 
 ## Contribuir
 
@@ -230,7 +325,7 @@ Las contribuciones son bienvenidas. Para contribuir:
 
 ### Reportar bugs
 
-Abre un [issue](https://github.com/tu-usuario/sellmate/issues) describiendo el problema, pasos para reproducirlo y el comportamiento esperado.
+Abre un [issue](https://github.com/cebasic/sellmate/issues) describiendo el problema, pasos para reproducirlo y el comportamiento esperado.
 
 ## Licencia
 
