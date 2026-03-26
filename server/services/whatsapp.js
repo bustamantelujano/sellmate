@@ -1,9 +1,8 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, Browsers, downloadMediaMessage, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, makeCacheableSignalKeyStore, Browsers, downloadMediaMessage, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const { dbRun, dbAll, dbGet } = require('../config/database');
+const { useDbAuthState } = require('./dbAuthState');
 const { handleIncomingMessage } = require('./bot');
 const QRCode = require('qrcode');
-const path = require('path');
-const fs = require('fs');
 const pino = require('pino');
 
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -35,20 +34,13 @@ class WhatsAppManager {
     return this.connections.get(tenantId);
   }
 
-  _getAuthDir(tenantId) {
-    return path.join(__dirname, '..', '..', `auth_info_baileys_${tenantId}`);
-  }
-
-  _clearAuthDir(tenantId) {
-    const authDir = this._getAuthDir(tenantId);
+  async _clearAuthDb(tenantId) {
     try {
-      if (fs.existsSync(authDir)) {
-        fs.rmSync(authDir, { recursive: true, force: true });
-        console.log(`[WA:${tenantId}] Cleared auth directory`);
-        return true;
-      }
+      await dbRun('DELETE FROM wa_auth_state WHERE tenant_id = ?', [tenantId]);
+      console.log(`[WA:${tenantId}] Cleared auth state from database`);
+      return true;
     } catch (e) {
-      console.error(`[WA:${tenantId}] Error clearing auth dir:`, e.message);
+      console.error(`[WA:${tenantId}] Error clearing auth state:`, e.message);
     }
     return false;
   }
@@ -97,7 +89,7 @@ class WhatsAppManager {
       conn.status = 'disconnected';
       conn.lastQr = '';
       conn.reconnectAttempts = 0;
-      this._clearAuthDir(tenantId);
+      this._clearAuthDb(tenantId);
     } else {
       // Not fresh start: skip if already connecting/connected
       if (conn.status === 'connecting' || conn.status === 'connected') {
@@ -125,14 +117,9 @@ class WhatsAppManager {
     const conn = this._getConn(tenantId);
     const logger = pino({ level: 'silent' });
 
-    const authDir = this._getAuthDir(tenantId);
-    if (!fs.existsSync(authDir)) {
-      fs.mkdirSync(authDir, { recursive: true });
-    }
+    console.log(`[WA:${tenantId}] Loading auth state from database...`);
 
-    console.log(`[WA:${tenantId}] Auth dir: ${authDir} (exists: ${fs.existsSync(authDir)}, files: ${fs.readdirSync(authDir).length})`);
-
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+    const { state, saveCreds } = await useDbAuthState(tenantId);
 
     // Fetch latest WhatsApp Web version with fallback
     let version;
@@ -211,7 +198,7 @@ class WhatsAppManager {
 
         if (statusCode === DisconnectReason.loggedOut) {
           conn.reconnectAttempts = 0;
-          this._clearAuthDir(tenantId);
+          await this._clearAuthDb(tenantId);
           if (this.io) this.io.to(`tenant:${tenantId}`).emit('whatsapp:error', 'WhatsApp cerró sesión. Reconecta para escanear un nuevo QR.');
           return;
         }
@@ -339,7 +326,7 @@ class WhatsAppManager {
       conn.lastQr = '';
       conn.reconnectAttempts = 0;
       try { await dbRun('UPDATE settings SET whatsapp_connected = 0 WHERE tenant_id = ?', [tenantId]); } catch (e) {}
-      this._clearAuthDir(tenantId);
+      await this._clearAuthDb(tenantId);
       this._emitStatus(tenantId);
     }
   }
