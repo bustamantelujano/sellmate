@@ -327,6 +327,7 @@ const allModules = [
 const providers = [
   { key: 'openai', icon: '🟢', name: 'OpenAI', desc: 'GPT-4o, GPT-4o mini' },
   { key: 'anthropic', icon: '🟠', name: 'Anthropic', desc: 'Claude Sonnet, Haiku' },
+  { key: 'gemini', icon: '🔵', name: 'Google Gemini', desc: 'Gemini 2.0 Flash, 2.5 Pro' },
   { key: 'custom', icon: '🔧', name: 'Custom', desc: 'API compatible con OpenAI' }
 ]
 
@@ -345,8 +346,9 @@ const form = reactive({
 })
 
 const modelSuggestions = computed(() => {
-  if (form.aiProvider === 'openai') return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo']
-  if (form.aiProvider === 'anthropic') return ['claude-sonnet-4-6', 'claude-haiku-4-5-20250315', 'claude-3-5-sonnet-20241022']
+  if (form.aiProvider === 'openai') return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo']
+  if (form.aiProvider === 'anthropic') return ['claude-sonnet-4-6', 'claude-haiku-4-5-20250315']
+  if (form.aiProvider === 'gemini') return ['gemini-2.0-flash', 'gemini-2.5-flash-preview-05-20', 'gemini-2.5-pro-preview-05-06']
   return ['gpt-4o-mini', 'gpt-4o']
 })
 

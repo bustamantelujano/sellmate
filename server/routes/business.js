@@ -37,8 +37,9 @@ router.post('/generate-description', authMiddleware, adminOnly, requireTenant, a
       { role: 'user', content: `Genera una descripcion para mi negocio:\nNombre: ${businessName}\nTipo: ${businessType}` }
     ];
 
-    const aiResponse = await generateResponse(req.tenantId, systemPrompt, messages, settings);
-    const description = (aiResponse || '').replace(/^["']|["']$/g, '').trim();
+    const aiResult = await generateResponse(req.tenantId, systemPrompt, messages, settings);
+    const rawText = aiResult?.response || aiResult || '';
+    const description = String(rawText).replace(/^["']|["']$/g, '').trim();
 
     res.json({ description });
   } catch (e) {

@@ -19,6 +19,9 @@ async function trackUsage(tenantId, provider, model, inputTokens, outputTokens, 
     'gpt-4o': { input: 2.50, output: 10.00 },
     'claude-sonnet-4-6': { input: 3.00, output: 15.00 },
     'claude-haiku-4-5': { input: 0.80, output: 4.00 },
+    'gemini-2.0-flash': { input: 0.10, output: 0.40 },
+    'gemini-2.5-flash-preview-05-20': { input: 0.15, output: 0.60 },
+    'gemini-2.5-pro-preview-05-06': { input: 1.25, output: 10.00 },
   };
   const rate = costs[model] || { input: 1.00, output: 3.00 };
   const costEstimate = (inputTokens * rate.input + outputTokens * rate.output) / 1_000_000;
@@ -55,6 +58,14 @@ function buildRequestOptions(settings) {
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json'
       },
+      model
+    };
+  }
+  if (provider === 'gemini') {
+    return {
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      headers: { 'Content-Type': 'application/json' },
       model
     };
   }
@@ -136,6 +147,9 @@ async function generateResponse(tenantId, systemPrompt, chatHistory, settings, t
 
   if (provider === 'anthropic') {
     return _anthropicLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx);
+  }
+  if (provider === 'gemini') {
+    return _geminiLoop(tenantId, systemPrompt, chatHistory, settings);
   }
   // OpenAI / Custom (OpenAI-compatible)
   return _openaiLoop(tenantId, systemPrompt, chatHistory, settings, toolCtx);
@@ -337,6 +351,51 @@ function _cleanAnthropicMessages(chatHistory) {
     }
   }
   return cleaned.length > 0 ? cleaned : [{ role: 'user', content: 'Hola' }];
+}
+
+// ────────────────── Gemini Loop ──────────────────
+
+async function _geminiLoop(tenantId, systemPrompt, chatHistory, settings) {
+  const opts = buildRequestOptions(settings);
+
+  // Convert chat history to Gemini format
+  const contents = [];
+  for (const msg of chatHistory) {
+    const role = msg.role === 'assistant' ? 'model' : 'user';
+    const text = Array.isArray(msg.content)
+      ? msg.content.filter(p => p.type === 'text').map(p => p.text).join('\n')
+      : msg.content;
+    if (text) contents.push({ role, parts: [{ text }] });
+  }
+
+  // Ensure starts with user and alternates
+  if (contents.length === 0 || contents[0].role !== 'user') {
+    contents.unshift({ role: 'user', parts: [{ text: 'Hola' }] });
+  }
+
+  const body = {
+    contents,
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    generationConfig: { maxOutputTokens: 600 }
+  };
+
+  const result = await makeRequest(opts, body);
+  if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
+
+  // Track usage
+  if (tenantId && result.usageMetadata) {
+    const inputTokens = result.usageMetadata.promptTokenCount || 0;
+    const outputTokens = result.usageMetadata.candidatesTokenCount || 0;
+    trackUsage(tenantId, 'gemini', opts.model, inputTokens, outputTokens, 'chat').catch(() => {});
+  }
+
+  const candidate = result.candidates?.[0];
+  if (!candidate || !candidate.content?.parts) {
+    throw new Error('No response from Gemini');
+  }
+
+  const rawText = candidate.content.parts.map(p => p.text).join('') || 'Lo siento, no pude generar una respuesta.';
+  return parseStructuredResponse(rawText);
 }
 
 // ────────────────── Image Generation (DALL-E) ──────────────────

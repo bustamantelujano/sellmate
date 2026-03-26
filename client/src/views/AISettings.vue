@@ -17,7 +17,7 @@
       <!-- Section 1: Proveedor de IA -->
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 class="text-base font-semibold text-gray-800 dark:text-white mb-4">Proveedor de IA</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button v-for="prov in providers" :key="prov.key" @click="form.ai_provider = prov.key"
             class="flex flex-col items-center p-5 rounded-xl border-2 transition-all text-center hover:shadow-md"
             :class="form.ai_provider === prov.key
@@ -112,13 +112,15 @@ const testResult = ref(null)
 const providers = [
   { key: 'openai', icon: '🟢', name: 'OpenAI', desc: 'GPT-4o, GPT-4o mini', features: ['Vision', 'Tool Calling', 'JSON Mode'] },
   { key: 'anthropic', icon: '🟠', name: 'Anthropic', desc: 'Claude Sonnet, Haiku', features: ['Vision', 'Tool Calling', 'Largo contexto'] },
+  { key: 'gemini', icon: '🔵', name: 'Google Gemini', desc: 'Gemini 2.0 Flash, 2.5 Pro', features: ['Vision', 'Rapido', 'Economico'] },
   { key: 'custom', icon: '🔧', name: 'Custom', desc: 'API compatible OpenAI', features: ['Flexible', 'Auto-hospedado'] }
 ]
 
 const modelSuggestions = computed(() => {
   if (!form.value) return []
-  if (form.value.ai_provider === 'openai') return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo']
-  if (form.value.ai_provider === 'anthropic') return ['claude-sonnet-4-6', 'claude-haiku-4-5-20250315', 'claude-3-5-sonnet-20241022']
+  if (form.value.ai_provider === 'openai') return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo']
+  if (form.value.ai_provider === 'anthropic') return ['claude-sonnet-4-6', 'claude-haiku-4-5-20250315']
+  if (form.value.ai_provider === 'gemini') return ['gemini-2.0-flash', 'gemini-2.5-flash-preview-05-20', 'gemini-2.5-pro-preview-05-06']
   return ['gpt-4o-mini', 'gpt-4o']
 })
 

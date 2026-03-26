@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS settings (
   friendliness INT NOT NULL DEFAULT 7,
   greeting_message TEXT DEFAULT NULL,
   farewell_message TEXT DEFAULT NULL,
-  ai_provider VARCHAR(20) NOT NULL DEFAULT 'openai',
+  ai_provider VARCHAR(20) NOT NULL DEFAULT 'openai' /* openai, anthropic, gemini, custom */,
   ai_api_key VARCHAR(500) DEFAULT '',
   ai_model VARCHAR(100) DEFAULT 'gpt-4o-mini',
   ai_custom_endpoint VARCHAR(500) DEFAULT '',
