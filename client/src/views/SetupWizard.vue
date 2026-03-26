@@ -58,7 +58,18 @@
               class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripcion</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripcion</label>
+              <button @click="generateDescription" :disabled="generatingDesc || !form.businessName.trim()"
+                class="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <svg v-if="generatingDesc" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+                <span v-else>✨</span>
+                {{ generatingDesc ? 'Generando...' : 'Generar con IA' }}
+              </button>
+            </div>
             <textarea v-model="form.businessDescription" rows="3" placeholder="Describe brevemente que ofrece tu negocio..."
               class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"></textarea>
           </div>
@@ -276,6 +287,7 @@ const error = ref('')
 const finishing = ref(false)
 const showApiKey = ref(false)
 const waConnecting = ref(false)
+const generatingDesc = ref(false)
 
 const steps = [
   'Tipo de negocio',
@@ -387,6 +399,24 @@ onMounted(async () => {
     if (qrData.qr) settingsStore.qrCode = qrData.qr
   } catch (e) { /* ignore */ }
 })
+
+async function generateDescription() {
+  if (!form.businessName.trim() || generatingDesc.value) return
+  generatingDesc.value = true
+  try {
+    const bt = businessTypes.find(b => b.key === form.businessType)
+    const { data } = await api.post('/business/generate-description', {
+      businessName: form.businessName,
+      businessType: bt?.name || form.businessType || 'negocio'
+    })
+    if (data.description) form.businessDescription = data.description
+  } catch (e) {
+    error.value = 'No se pudo generar la descripcion. Verifica tu configuracion de IA.'
+    setTimeout(() => error.value = '', 4000)
+  } finally {
+    generatingDesc.value = false
+  }
+}
 
 function nextStep() {
   if (canProceed.value && step.value < steps.length - 1) {

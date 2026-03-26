@@ -8,7 +8,18 @@
           <input v-model="form.name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripcion</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripcion</label>
+            <button v-if="auth.isAdmin" @click="generateDescription" :disabled="generatingDesc || !form.name?.trim()"
+              class="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <svg v-if="generatingDesc" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              <span v-else>✨</span>
+              {{ generatingDesc ? 'Generando...' : 'Generar con IA' }}
+            </button>
+          </div>
           <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"></textarea>
         </div>
         <div>
@@ -50,11 +61,28 @@ const auth = useAuthStore()
 const form = ref({ name: '', description: '', address: '', phone: '', hours: '', policies: '', extra_info: '' })
 const saving = ref(false)
 const saved = ref(false)
+const generatingDesc = ref(false)
 
 onMounted(async () => {
   const { data } = await api.get('/business')
   if (data.business) form.value = { ...data.business }
 })
+
+async function generateDescription() {
+  if (!form.value.name?.trim() || generatingDesc.value) return
+  generatingDesc.value = true
+  try {
+    const { data } = await api.post('/business/generate-description', {
+      businessName: form.value.name,
+      businessType: 'negocio'
+    })
+    if (data.description) form.value.description = data.description
+  } catch (e) {
+    alert('No se pudo generar la descripcion. Verifica tu configuracion de IA.')
+  } finally {
+    generatingDesc.value = false
+  }
+}
 
 async function save() {
   saving.value = true
