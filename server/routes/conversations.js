@@ -47,4 +47,23 @@ router.put('/:id/status', authMiddleware, requireTenant, async (req, res) => {
   res.json({ conversation });
 });
 
+// DELETE /:id/messages - clear chat (delete all messages but keep conversation)
+router.delete('/:id/messages', authMiddleware, requireTenant, async (req, res) => {
+  const conv = await dbGet('SELECT * FROM conversations WHERE id = ? AND tenant_id = ?',
+    [Number(req.params.id), req.tenantId]);
+  if (!conv) return res.status(404).json({ error: 'Conversación no encontrada' });
+  await dbRun('DELETE FROM messages WHERE conversation_id = ?', [conv.id]);
+  res.json({ success: true });
+});
+
+// DELETE /:id - delete conversation and all its messages
+router.delete('/:id', authMiddleware, requireTenant, async (req, res) => {
+  const conv = await dbGet('SELECT * FROM conversations WHERE id = ? AND tenant_id = ?',
+    [Number(req.params.id), req.tenantId]);
+  if (!conv) return res.status(404).json({ error: 'Conversación no encontrada' });
+  await dbRun('DELETE FROM messages WHERE conversation_id = ?', [conv.id]);
+  await dbRun('DELETE FROM conversations WHERE id = ?', [conv.id]);
+  res.json({ success: true });
+});
+
 module.exports = router;

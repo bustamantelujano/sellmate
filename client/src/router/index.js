@@ -13,7 +13,8 @@ const routes = [
   { path: '/settings', name: 'Settings', component: () => import('../views/Settings.vue') },
   { path: '/agents', name: 'Agents', component: () => import('../views/Agents.vue') },
   { path: '/modules', name: 'Modules', component: () => import('../views/Modules.vue') },
-  { path: '/ai-settings', name: 'AISettings', component: () => import('../views/AISettings.vue') }
+  { path: '/ai-settings', name: 'AISettings', component: () => import('../views/AISettings.vue') },
+  { path: '/clients', name: 'Clients', component: () => import('../views/Clients.vue') }
 ]
 
 const router = createRouter({

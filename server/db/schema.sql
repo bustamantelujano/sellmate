@@ -218,3 +218,20 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   FOREIGN KEY (tenant_id) REFERENCES tenants(id),
   INDEX idx_ai_usage_tenant_date (tenant_id, created_at)
 );
+
+-- Clients / Contacts per tenant
+CREATE TABLE IF NOT EXISTS clients (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id INT NOT NULL,
+  phone_number VARCHAR(50) NOT NULL,
+  name VARCHAR(255) DEFAULT '',
+  email VARCHAR(255) DEFAULT '',
+  notes TEXT DEFAULT NULL,
+  tags VARCHAR(500) DEFAULT '',
+  total_conversations INT NOT NULL DEFAULT 0,
+  total_orders INT NOT NULL DEFAULT 0,
+  last_contact_at DATETIME DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_client_tenant_phone (tenant_id, phone_number),
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);

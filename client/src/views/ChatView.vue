@@ -36,6 +36,22 @@
           class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cerrar conversacion">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
+        <!-- More menu -->
+        <div class="relative">
+          <button @click="showMenu = !showMenu" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+          </button>
+          <div v-if="showMenu" class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+            <button @click="clearChat" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Vaciar chat
+            </button>
+            <button @click="deleteConversation" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              Eliminar conversacion
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -111,12 +127,13 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useConversationsStore } from '../stores/conversations'
 import { useSocket } from '../composables/useSocket'
 import api from '../lib/api'
 
 const route = useRoute()
+const router = useRouter()
 const convStore = useConversationsStore()
 const { emit } = useSocket()
 
@@ -177,6 +194,11 @@ function bubbleClass(sender) {
   }
 }
 
+function isPhoneNumber(num) {
+  if (!num) return false
+  return /^\+?\d{10,15}$/.test(num)
+}
+
 function formatTime(ts) {
   if (!ts) return ''
   const d = new Date(ts + 'Z')
@@ -189,10 +211,30 @@ function sendMessage() {
   newMessage.value = ''
 }
 
+const showMenu = ref(false)
+
 async function takeOver() { await convStore.changeStatus(conv.value.id, 'human') }
 async function returnToBot() { await convStore.changeStatus(conv.value.id, 'bot') }
 async function closeConv() {
   if (confirm('Cerrar esta conversacion?')) await convStore.changeStatus(conv.value.id, 'closed')
+}
+
+async function clearChat() {
+  showMenu.value = false
+  if (!confirm('Vaciar todos los mensajes de este chat? La conversacion se mantiene.')) return
+  try {
+    await api.delete(`/conversations/${conv.value.id}/messages`)
+    convStore.currentMessages = []
+  } catch (e) { alert('Error al vaciar chat') }
+}
+
+async function deleteConversation() {
+  showMenu.value = false
+  if (!confirm('Eliminar esta conversacion y todos sus mensajes? Esta accion no se puede deshacer.')) return
+  try {
+    await api.delete(`/conversations/${conv.value.id}`)
+    router.push('/conversations')
+  } catch (e) { alert('Error al eliminar') }
 }
 
 async function getCopilotSuggestion() {

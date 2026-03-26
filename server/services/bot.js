@@ -47,6 +47,16 @@ async function handleIncomingMessage(tenantId, phoneNumber, contactName, message
     conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [conversation.id]);
   }
 
+  // Auto-create/update client record
+  try {
+    const existingClient = await dbGet('SELECT id FROM clients WHERE tenant_id = ? AND phone_number = ?', [tenantId, phoneNumber]);
+    if (existingClient) {
+      await dbRun('UPDATE clients SET name = COALESCE(NULLIF(?, \'\'), name), last_contact_at = NOW() WHERE id = ?', [contactName, existingClient.id]);
+    } else {
+      await dbRun('INSERT INTO clients (tenant_id, phone_number, name, last_contact_at) VALUES (?, ?, ?, NOW())', [tenantId, phoneNumber, contactName || phoneNumber]);
+    }
+  } catch (e) { /* ignore duplicate or errors */ }
+
   // Save incoming message
   const msgResult = await dbRun(
     'INSERT INTO messages (conversation_id, sender, sender_name, content, message_type, image_data) VALUES (?, ?, ?, ?, ?, ?)',

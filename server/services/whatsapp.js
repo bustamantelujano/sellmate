@@ -15,6 +15,8 @@ class WhatsAppManager {
   constructor() {
     // Map<tenantId, { sock, status, lastQr, reconnectAttempts }>
     this.connections = new Map();
+    // Map<tenantId, Map<lid, phoneJid>> - LID to phone number cache
+    this.lidCache = new Map();
     this.io = null;
   }
 
@@ -139,7 +141,8 @@ class WhatsAppManager {
       },
       browser: Browsers.macOS('Chrome'),
       logger,
-      printQRInTerminal: true // Also print QR in terminal for debugging
+      syncFullHistory: true,
+      printQRInTerminal: true
     };
     if (version) socketConfig.version = version;
 
@@ -148,6 +151,27 @@ class WhatsAppManager {
     conn.sock = sock;
 
     sock.ev.on('creds.update', saveCreds);
+
+    // Build LID → phone cache from contacts
+    if (!this.lidCache.has(tenantId)) this.lidCache.set(tenantId, new Map());
+    const cache = this.lidCache.get(tenantId);
+
+    const processContacts = (contacts) => {
+      for (const c of contacts) {
+        // c.id is the phone JID (@s.whatsapp.net), c.lid is the LID JID (@lid)
+        if (c.id && c.lid) {
+          const lid = c.lid.replace(/@lid$/, '').split(':')[0];
+          const phone = c.id.replace(/@s\.whatsapp\.net$/, '').split(':')[0];
+          cache.set(lid, phone);
+        }
+      }
+      if (cache.size > 0) console.log(`[WA:${tenantId}] LID cache: ${cache.size} entries`);
+    };
+
+    sock.ev.on('contacts.upsert', processContacts);
+    sock.ev.on('contacts.update', processContacts);
+    sock.ev.on('contacts.set', ({ contacts: c }) => { if (c) processContacts(c); });
+    sock.ev.on('messaging-history.set', ({ contacts: c }) => { if (c) processContacts(c); });
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -233,7 +257,30 @@ class WhatsAppManager {
         if (remoteJid.endsWith('@g.us')) continue;
 
         const isLid = remoteJid.endsWith('@lid');
-        const phoneNumber = remoteJid.replace(/@(s\.whatsapp\.net|lid)$/, '');
+        let phoneNumber = remoteJid.replace(/@(s\.whatsapp\.net|lid)$/, '');
+        // Strip :device suffix (e.g. "5216672646767:14" → "5216672646767")
+        phoneNumber = phoneNumber.split(':')[0];
+
+        // Resolve LID to real phone number using cache
+        if (isLid) {
+          const cache = this.lidCache.get(tenantId);
+          const resolved = cache?.get(phoneNumber);
+          if (resolved) {
+            console.log(`[WA:${tenantId}] Resolved LID ${phoneNumber} → ${resolved}`);
+            phoneNumber = resolved;
+          } else {
+            console.log(`[WA:${tenantId}] Could not resolve LID ${phoneNumber}, cache has ${cache?.size || 0} entries`);
+          }
+        }
+
+        // Resolve LID to real phone using senderPn/participantPn fields
+        if (isLid) {
+          const pn = msg.key.senderPn || msg.key.participantPn;
+          if (pn) {
+            phoneNumber = pn.replace(/@s\.whatsapp\.net$/, '').split(':')[0];
+            console.log(`[WA:${tenantId}] Resolved LID via senderPn: ${phoneNumber}`);
+          }
+        }
         console.log(`[WA:${tenantId}] Extracted phone: ${phoneNumber}, pushName: ${msg.pushName}, isLid: ${isLid}`);
         const contactName = msg.pushName || '';
 

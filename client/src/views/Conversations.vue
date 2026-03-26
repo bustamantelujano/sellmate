@@ -112,6 +112,13 @@ function statusBadge(status) {
   }
 }
 
+function isPhoneNumber(num) {
+  if (!num) return false
+  // Real phone numbers start with country code (1-3 digits) and are 10-15 chars
+  // LIDs are WhatsApp internal IDs that don't follow phone format
+  return /^\+?\d{10,15}$/.test(num)
+}
+
 function formatTime(ts) {
   if (!ts) return ''
   const d = new Date(ts + 'Z')
