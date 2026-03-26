@@ -10,17 +10,102 @@
 
     <!-- Product Form Modal -->
     <div v-if="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-lg">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">{{ editingProduct ? 'Editar' : 'Nuevo' }} Producto</h3>
         <div class="space-y-3">
-          <input v-model="form.name" placeholder="Nombre del producto" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+
+          <!-- IMAGE SECTION (first) -->
+          <div>
+            <!-- Has image: show preview -->
+            <div v-if="form.image_url" class="flex flex-col items-center gap-2">
+              <img :src="form.image_url" alt="Preview" class="w-28 h-28 rounded-xl object-cover border-2 border-gray-200 dark:border-gray-600 shadow-sm" />
+              <button @click="form.image_url = ''" class="text-xs text-red-500 hover:text-red-600 font-medium">Quitar imagen</button>
+            </div>
+
+            <!-- No image: show 3 options -->
+            <div v-else class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4">
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 text-center mb-3">Imagen del producto</p>
+              <div class="flex flex-col gap-2">
+                <!-- Row 1: Upload + Generate AI -->
+                <div class="flex gap-2">
+                  <label class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                    :class="{ 'opacity-50 pointer-events-none': uploadingImage }">
+                    <svg v-if="uploadingImage" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                    </svg>
+                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    {{ uploadingImage ? 'Subiendo...' : 'Subir imagen' }}
+                    <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" :disabled="uploadingImage" />
+                  </label>
+
+                  <button v-if="canGenerateImage" @click="generateProductImage" :disabled="generatingImage || !form.name?.trim()"
+                    class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    <svg v-if="generatingImage" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                    </svg>
+                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {{ generatingImage ? 'Generando...' : 'Generar con IA' }}
+                  </button>
+                </div>
+
+                <!-- Row 2: Paste URL -->
+                <div class="flex gap-2">
+                  <input v-if="showUrlInput" v-model="pasteUrl" placeholder="https://ejemplo.com/imagen.jpg" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary-500" @keyup.enter="importFromUrl" />
+                  <button v-if="showUrlInput" @click="importFromUrl" :disabled="importingUrl || !pasteUrl.trim()"
+                    class="px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed">
+                    <svg v-if="importingUrl" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                    </svg>
+                    <span v-else>Importar</span>
+                  </button>
+                  <button v-if="!showUrlInput" @click="showUrlInput = true"
+                    class="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-medium transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Pegar enlace de imagen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name + AI generate button -->
+          <div>
+            <div class="flex gap-2">
+              <input v-model="form.name" placeholder="Nombre del producto" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+              <button @click="generateProductDetails" :disabled="generatingDetails || !form.name?.trim()"
+                class="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+                <svg v-if="generatingDetails" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+                <span v-else>✨</span>
+                {{ generatingDetails ? 'Generando...' : 'Generar con IA' }}
+              </button>
+            </div>
+            <p v-if="!editingProduct" class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Escribe el nombre y presiona "Generar con IA" para rellenar todo automaticamente</p>
+          </div>
+
           <textarea v-model="form.description" placeholder="Descripcion" rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+
           <div class="grid grid-cols-3 gap-3">
             <input v-model.number="form.price" type="number" step="0.01" placeholder="Precio" class="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
-            <input v-model="form.category" placeholder="Categoria" class="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+            <div>
+              <input v-model="form.category" list="categories-list" placeholder="Categoria" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+              <datalist id="categories-list">
+                <option v-for="cat in existingCategories" :key="cat" :value="cat" />
+              </datalist>
+            </div>
             <input v-model.number="form.stock" type="number" placeholder="Stock" class="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
-          <input v-model="form.image_url" placeholder="URL de imagen (opcional)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div class="flex justify-end gap-2 mt-4">
           <button @click="closeForm" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm">Cancelar</button>
@@ -127,6 +212,21 @@ const products = ref([])
 const showForm = ref(false)
 const editingProduct = ref(null)
 const form = ref({ name: '', description: '', price: 0, category: '', stock: 0, image_url: '' })
+const generatingDetails = ref(false)
+const generatingImage = ref(false)
+const uploadingImage = ref(false)
+const importingUrl = ref(false)
+const canGenerateImage = ref(false)
+const showUrlInput = ref(false)
+const pasteUrl = ref('')
+
+const existingCategories = computed(() => {
+  const cats = new Set()
+  for (const p of products.value) {
+    if (p.category?.trim()) cats.add(p.category.trim())
+  }
+  return [...cats].sort()
+})
 
 // Pagination
 const currentPage = ref(1)
@@ -145,7 +245,6 @@ function goToPage(page) {
   }
 }
 
-// Reset page if current page exceeds total after deletion
 watch(() => products.value.length, () => {
   if (currentPage.value > totalPages.value && totalPages.value > 0) {
     currentPage.value = totalPages.value
@@ -155,11 +254,17 @@ watch(() => products.value.length, () => {
 onMounted(async () => {
   const { data } = await api.get('/products')
   products.value = data.products
+  try {
+    const { data: imgData } = await api.get('/products/can-generate-image')
+    canGenerateImage.value = imgData.available
+  } catch (e) { /* ignore */ }
 })
 
 function editProduct(product) {
   editingProduct.value = product
   form.value = { ...product }
+  showUrlInput.value = false
+  pasteUrl.value = ''
   showForm.value = true
 }
 
@@ -167,6 +272,8 @@ function closeForm() {
   showForm.value = false
   editingProduct.value = null
   form.value = { name: '', description: '', price: 0, category: '', stock: 0, image_url: '' }
+  showUrlInput.value = false
+  pasteUrl.value = ''
 }
 
 async function saveProduct() {
@@ -182,6 +289,72 @@ async function saveProduct() {
     closeForm()
   } catch (err) {
     alert(err.response?.data?.error || 'Error')
+  }
+}
+
+async function generateProductDetails() {
+  if (!form.value.name?.trim() || generatingDetails.value) return
+  generatingDetails.value = true
+  try {
+    const { data } = await api.post('/products/generate', { name: form.value.name })
+    if (data.description) form.value.description = data.description
+    if (data.category) form.value.category = data.category
+    if (data.price) form.value.price = data.price
+    if (data.stock) form.value.stock = data.stock
+  } catch (e) {
+    alert(e.response?.data?.error || 'No se pudo generar. Verifica tu configuracion de IA.')
+  } finally {
+    generatingDetails.value = false
+  }
+}
+
+async function handleImageUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  uploadingImage.value = true
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+    const { data } = await api.post('/products/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (data.image_url) form.value.image_url = data.image_url
+  } catch (err) {
+    alert(err.response?.data?.error || 'Error al subir imagen')
+  } finally {
+    uploadingImage.value = false
+    e.target.value = ''
+  }
+}
+
+async function importFromUrl() {
+  if (!pasteUrl.value.trim() || importingUrl.value) return
+  importingUrl.value = true
+  try {
+    const { data } = await api.post('/products/import-image', { url: pasteUrl.value.trim() })
+    if (data.image_url) form.value.image_url = data.image_url
+    showUrlInput.value = false
+    pasteUrl.value = ''
+  } catch (err) {
+    alert(err.response?.data?.error || 'Error al importar imagen')
+  } finally {
+    importingUrl.value = false
+  }
+}
+
+async function generateProductImage() {
+  if (!form.value.name?.trim() || generatingImage.value) return
+  generatingImage.value = true
+  try {
+    const { data } = await api.post('/products/generate-image', {
+      productName: form.value.name,
+      description: form.value.description || ''
+    })
+    if (data.image_url) form.value.image_url = data.image_url
+  } catch (e) {
+    alert(e.response?.data?.error || 'No se pudo generar la imagen.')
+  } finally {
+    generatingImage.value = false
   }
 }
 
@@ -202,7 +375,7 @@ async function duplicateProduct(product) {
 }
 
 async function deleteProduct(id) {
-  if (!confirm('¿Eliminar este producto?')) return
+  if (!confirm('Eliminar este producto?')) return
   await api.delete(`/products/${id}`)
   products.value = products.value.filter(p => p.id !== id)
 }

@@ -506,71 +506,89 @@
 
         <!-- ===== PROVEEDOR DE IA ===== -->
         <template v-if="activeSection === 'ai'">
-          <!-- Keys list -->
+          <!-- 1. API Keys -->
           <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-base font-semibold text-gray-800 dark:text-white">Llaves de API</h3>
-              <button @click="openAddKeyModal()"
-                class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition-colors">
+              <div>
+                <h3 class="text-base font-semibold text-gray-800 dark:text-white">Llaves de API</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Una llave por proveedor. Se usan para autenticar los modelos.</p>
+              </div>
+              <button @click="openAddKeyModal()" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Agregar llave
+                Agregar
               </button>
             </div>
-
-            <div v-if="aiKeysLoading" class="flex items-center justify-center py-10">
-              <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+            <div v-if="aiKeysLoading" class="flex items-center justify-center py-8">
+              <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
             </div>
-
-            <div v-else-if="aiKeys.length === 0" class="flex flex-col items-center py-10 text-center">
-              <div class="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
-                <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-              </div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-300">No tienes llaves configuradas</p>
-              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Agrega una llave de API para empezar a usar el bot con IA</p>
+            <div v-else-if="aiKeys.length === 0" class="text-center py-8">
+              <p class="text-sm text-gray-400 dark:text-gray-500">No tienes llaves. Agrega una para empezar.</p>
             </div>
-
-            <div v-else class="space-y-3">
-              <div v-for="akey in aiKeys" :key="akey.id"
-                class="flex items-center gap-4 p-4 rounded-xl border-2 transition-all"
-                :class="akey.is_active ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' : 'border-gray-200 dark:border-gray-600'">
-                <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" :class="aiProviderBg(akey.provider)">
-                  <svg v-if="akey.provider === 'openai'" class="w-5 h-5 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
-                  <svg v-else-if="akey.provider === 'anthropic'" class="w-5 h-5 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/></svg>
-                  <svg v-else-if="akey.provider === 'gemini'" class="w-5 h-5" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="url(#gl)"/><defs><linearGradient id="gl" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#4285F4"/><stop offset=".5" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs></svg>
-                  <svg v-else class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <div v-else class="space-y-2">
+              <div v-for="akey in aiKeys" :key="akey.id" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" :class="aiProviderBg(akey.provider)">
+                  <svg v-if="akey.provider === 'openai'" class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+                  <svg v-else-if="akey.provider === 'anthropic'" class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/></svg>
+                  <svg v-else-if="akey.provider === 'gemini'" class="w-4 h-4" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="url(#gl)"/><defs><linearGradient id="gl" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#4285F4"/><stop offset=".5" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs></svg>
+                  <svg v-else-if="akey.provider === 'deepseek'" class="w-4 h-4" viewBox="0 0 512 509.64" fill="#4D6BFE"><path d="M440.898 139.167c-4.001-1.961-5.723 1.776-8.062 3.673-.801.612-1.479 1.407-2.154 2.141-5.848 6.246-12.681 10.349-21.607 9.859-13.048-.734-24.192 3.368-34.04 13.348-2.093-12.307-9.048-19.658-19.635-24.37-5.54-2.449-11.141-4.9-15.02-10.227-2.708-3.795-3.447-8.021-4.801-12.185-.861-2.509-1.725-5.082-4.618-5.512-3.139-.49-4.372 2.142-5.601 4.349-4.925 9.002-6.833 18.921-6.647 28.962.432 22.597 9.972 40.597 28.932 53.397 2.154 1.47 2.707 2.939 2.032 5.082-1.293 4.41-2.832 8.695-4.186 13.105-.862 2.817-2.157 3.429-5.172 2.205-10.402-4.346-19.391-10.778-27.332-18.553-13.481-13.044-25.668-27.434-40.873-38.702a177.614 177.614 0 00-10.834-7.409c-15.512-15.063 2.032-27.434 6.094-28.902 4.247-1.532 1.478-6.797-12.251-6.736-13.727.061-26.285 4.653-42.288 10.777-2.34.92-4.801 1.593-7.326 2.142-14.527-2.756-29.608-3.368-45.367-1.593-29.671 3.305-53.368 17.329-70.788 41.272-20.928 28.785-25.854 61.482-19.821 95.59 6.34 35.943 24.683 65.704 52.876 88.974 29.239 24.123 62.911 35.943 101.32 33.677 23.329-1.346 49.307-4.468 78.607-29.27 7.387 3.673 15.142 5.144 28.008 6.246 9.911.92 19.452-.49 26.839-2.019 11.573-2.449 10.773-13.166 6.586-15.124-33.915-15.797-26.47-9.368-33.24-14.573 17.235-20.39 43.213-41.577 53.369-110.222.8-5.448.121-8.877 0-13.287-.061-2.692.553-3.734 3.632-4.041 8.494-.981 16.742-3.305 24.314-7.471 21.975-12.002 30.84-31.719 32.933-55.355.307-3.612-.061-7.348-3.879-9.245v-.003zM249.4 351.89c-32.872-25.838-48.814-34.352-55.4-33.984-6.155.368-5.048 7.41-3.694 12.002 1.415 4.532 3.264 7.654 5.848 11.634 1.785 2.634 3.017 6.551-1.784 9.493-10.587 6.55-28.993-2.205-29.856-2.635-21.421-12.614-39.334-29.269-51.954-52.047-12.187-21.924-19.267-45.435-20.435-70.542-.308-6.061 1.478-8.207 7.509-9.307 7.94-1.471 16.127-1.778 24.068-.615 33.547 4.9 62.108 19.902 86.054 43.66 13.666 13.531 24.007 29.699 34.658 45.496 11.326 16.778 23.514 32.761 39.026 45.865 5.479 4.592 9.848 8.083 14.035 10.656-12.62 1.407-33.673 1.714-48.075-9.676zm15.899-102.519c.521-2.111 2.421-3.658 4.722-3.658a4.74 4.74 0 011.661.305c.678.246 1.293.614 1.786 1.163.861.859 1.354 2.083 1.354 3.368 0 2.695-2.154 4.837-4.862 4.837a4.748 4.748 0 01-4.738-4.034 5.01 5.01 0 01.077-1.981zm47.208 26.915c-2.606.996-5.2 1.778-7.707 1.88-4.679.244-9.787-1.654-12.556-3.981-4.308-3.612-7.386-5.631-8.679-11.941-.554-2.695-.247-6.858.246-9.246 1.108-5.144-.124-8.451-3.754-11.451-2.954-2.449-6.711-3.122-10.834-3.122-1.539 0-2.954-.673-4.001-1.224-1.724-.856-3.139-3-1.785-5.634.432-.856 2.525-2.939 3.018-3.305 5.6-3.185 12.065-2.144 18.034.244 5.54 2.266 9.727 6.429 15.759 12.307 6.155 7.102 7.263 9.063 10.773 14.39 2.771 4.163 5.294 8.451 7.018 13.348.877 2.561.071 4.74-2.341 6.277-.981.625-2.109 1.044-3.191 1.458z"/></svg>
+                  <svg v-else class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">{{ akey.label }}</p>
-                    <span v-if="akey.is_active" class="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">Activa</span>
-                  </div>
-                  <div class="flex items-center gap-3 mt-1">
-                    <span class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ akey.provider }}</span>
-                    <span class="text-xs text-gray-300 dark:text-gray-600">|</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ akey.model }}</span>
-                    <span class="text-xs text-gray-300 dark:text-gray-600">|</span>
-                    <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">{{ akey.api_key_masked }}</span>
-                  </div>
+                  <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ akey.label }}</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 font-mono">{{ akey.api_key_masked }}</p>
                 </div>
-                <div class="flex items-center gap-1.5 flex-shrink-0">
-                  <button v-if="!akey.is_active" @click="activateAiKey(akey.id)" title="Usar esta llave" class="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  </button>
-                  <button @click="testAiKey(akey)" title="Probar conexion" :disabled="aiTestingId === akey.id" class="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-40">
-                    <svg v-if="aiTestingId !== akey.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                  </button>
-                  <button @click="aiDeleteTarget = akey; showAiDeleteModal = true" title="Eliminar" class="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
-                </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500 capitalize">{{ akey.provider }}</span>
+                <button @click="aiDeleteTarget = akey; showAiDeleteModal = true" title="Eliminar" class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
               </div>
             </div>
+          </div>
 
+          <!-- 2. Modelos favoritos -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-gray-800 dark:text-white">Modelos</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Agrega modelos y alterna entre ellos. El activo es el que usa el bot.</p>
+              </div>
+              <button @click="openAddModelModal()" :disabled="aiKeys.length === 0"
+                class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Agregar
+              </button>
+            </div>
+            <div v-if="aiKeys.length === 0" class="text-center py-6">
+              <p class="text-sm text-gray-400 dark:text-gray-500">Primero agrega una llave de API arriba</p>
+            </div>
+            <div v-else-if="aiModels.length === 0" class="text-center py-6">
+              <p class="text-sm text-gray-400 dark:text-gray-500">No tienes modelos configurados</p>
+            </div>
+            <div v-else class="space-y-2">
+              <div v-for="m in aiModels" :key="m.id"
+                class="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all"
+                :class="m.is_active ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'"
+                @click="!m.is_active && activateAiModel(m.id)">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" :class="m.is_active ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-700'">
+                  <svg v-if="m.is_active" class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span v-else class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-500"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ m.label || m.model }}</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    <span class="capitalize">{{ m.provider }}</span> · <span class="font-mono">{{ m.model }}</span>
+                  </p>
+                </div>
+                <span v-if="m.is_active" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">Activo</span>
+                <button @click.stop="aiModelDeleteTarget = m; showAiModelDeleteModal = true" title="Eliminar" class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
             <p v-if="aiTestMsg" class="mt-3 text-sm" :class="aiTestSuccess ? 'text-green-600' : 'text-red-600'">{{ aiTestMsg }}</p>
           </div>
 
-          <!-- Consumo -->
+          <!-- 3. Consumo -->
           <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div class="flex items-center justify-between mb-3">
               <h3 class="text-base font-semibold text-gray-800 dark:text-white">Consumo este mes</h3>
@@ -681,12 +699,12 @@
       </div>
     </div>
 
-    <!-- Add AI key modal -->
+    <!-- Add AI key modal (simplified - no model) -->
     <Teleport to="body">
       <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
         <div v-if="showAiKeyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" @click="showAiKeyModal = false"></div>
-          <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-5">
+          <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Agregar llave de API</h3>
               <button @click="showAiKeyModal = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -695,20 +713,31 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Proveedor</label>
-              <div class="grid grid-cols-4 gap-2">
-                <button v-for="prov in [{key:'openai',name:'OpenAI'},{key:'anthropic',name:'Anthropic'},{key:'gemini',name:'Gemini'},{key:'custom',name:'Custom'}]" :key="prov.key" @click="aiKeyForm.provider = prov.key"
-                  class="flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center"
-                  :class="aiKeyForm.provider === prov.key ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
-                  <svg v-if="prov.key === 'openai'" class="w-7 h-7 mb-1.5 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
-                  <svg v-else-if="prov.key === 'anthropic'" class="w-7 h-7 mb-1.5 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/></svg>
-                  <svg v-else-if="prov.key === 'gemini'" class="w-7 h-7 mb-1.5" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="url(#gm2)"/><defs><linearGradient id="gm2" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#4285F4"/><stop offset=".5" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs></svg>
-                  <svg v-else class="w-7 h-7 mb-1.5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ prov.name }}</span>
+              <div class="grid grid-cols-5 gap-2">
+                <button @click="aiKeyForm.provider = 'openai'" class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all" :class="aiKeyForm.provider === 'openai' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
+                  <svg class="w-6 h-6 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+                  <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-200">OpenAI</span>
+                </button>
+                <button @click="aiKeyForm.provider = 'anthropic'" class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all" :class="aiKeyForm.provider === 'anthropic' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
+                  <svg class="w-6 h-6 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/></svg>
+                  <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-200">Anthropic</span>
+                </button>
+                <button @click="aiKeyForm.provider = 'gemini'" class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all" :class="aiKeyForm.provider === 'gemini' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="url(#gm3)"/><defs><linearGradient id="gm3" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#4285F4"/><stop offset=".5" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs></svg>
+                  <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-200">Gemini</span>
+                </button>
+                <button @click="aiKeyForm.provider = 'deepseek'" class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all" :class="aiKeyForm.provider === 'deepseek' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
+                  <svg class="w-6 h-6" viewBox="0 0 512 509.64" fill="#4D6BFE"><path d="M440.898 139.167c-4.001-1.961-5.723 1.776-8.062 3.673-.801.612-1.479 1.407-2.154 2.141-5.848 6.246-12.681 10.349-21.607 9.859-13.048-.734-24.192 3.368-34.04 13.348-2.093-12.307-9.048-19.658-19.635-24.37-5.54-2.449-11.141-4.9-15.02-10.227-2.708-3.795-3.447-8.021-4.801-12.185-.861-2.509-1.725-5.082-4.618-5.512-3.139-.49-4.372 2.142-5.601 4.349-4.925 9.002-6.833 18.921-6.647 28.962.432 22.597 9.972 40.597 28.932 53.397 2.154 1.47 2.707 2.939 2.032 5.082-1.293 4.41-2.832 8.695-4.186 13.105-.862 2.817-2.157 3.429-5.172 2.205-10.402-4.346-19.391-10.778-27.332-18.553-13.481-13.044-25.668-27.434-40.873-38.702a177.614 177.614 0 00-10.834-7.409c-15.512-15.063 2.032-27.434 6.094-28.902 4.247-1.532 1.478-6.797-12.251-6.736-13.727.061-26.285 4.653-42.288 10.777-2.34.92-4.801 1.593-7.326 2.142-14.527-2.756-29.608-3.368-45.367-1.593-29.671 3.305-53.368 17.329-70.788 41.272-20.928 28.785-25.854 61.482-19.821 95.59 6.34 35.943 24.683 65.704 52.876 88.974 29.239 24.123 62.911 35.943 101.32 33.677 23.329-1.346 49.307-4.468 78.607-29.27 7.387 3.673 15.142 5.144 28.008 6.246 9.911.92 19.452-.49 26.839-2.019 11.573-2.449 10.773-13.166 6.586-15.124-33.915-15.797-26.47-9.368-33.24-14.573 17.235-20.39 43.213-41.577 53.369-110.222.8-5.448.121-8.877 0-13.287-.061-2.692.553-3.734 3.632-4.041 8.494-.981 16.742-3.305 24.314-7.471 21.975-12.002 30.84-31.719 32.933-55.355.307-3.612-.061-7.348-3.879-9.245v-.003zM249.4 351.89c-32.872-25.838-48.814-34.352-55.4-33.984-6.155.368-5.048 7.41-3.694 12.002 1.415 4.532 3.264 7.654 5.848 11.634 1.785 2.634 3.017 6.551-1.784 9.493-10.587 6.55-28.993-2.205-29.856-2.635-21.421-12.614-39.334-29.269-51.954-52.047-12.187-21.924-19.267-45.435-20.435-70.542-.308-6.061 1.478-8.207 7.509-9.307 7.94-1.471 16.127-1.778 24.068-.615 33.547 4.9 62.108 19.902 86.054 43.66 13.666 13.531 24.007 29.699 34.658 45.496 11.326 16.778 23.514 32.761 39.026 45.865 5.479 4.592 9.848 8.083 14.035 10.656-12.62 1.407-33.673 1.714-48.075-9.676zm15.899-102.519c.521-2.111 2.421-3.658 4.722-3.658a4.74 4.74 0 011.661.305c.678.246 1.293.614 1.786 1.163.861.859 1.354 2.083 1.354 3.368 0 2.695-2.154 4.837-4.862 4.837a4.748 4.748 0 01-4.738-4.034 5.01 5.01 0 01.077-1.981zm47.208 26.915c-2.606.996-5.2 1.778-7.707 1.88-4.679.244-9.787-1.654-12.556-3.981-4.308-3.612-7.386-5.631-8.679-11.941-.554-2.695-.247-6.858.246-9.246 1.108-5.144-.124-8.451-3.754-11.451-2.954-2.449-6.711-3.122-10.834-3.122-1.539 0-2.954-.673-4.001-1.224-1.724-.856-3.139-3-1.785-5.634.432-.856 2.525-2.939 3.018-3.305 5.6-3.185 12.065-2.144 18.034.244 5.54 2.266 9.727 6.429 15.759 12.307 6.155 7.102 7.263 9.063 10.773 14.39 2.771 4.163 5.294 8.451 7.018 13.348.877 2.561.071 4.74-2.341 6.277-.981.625-2.109 1.044-3.191 1.458z"/></svg>
+                  <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-200">DeepSeek</span>
+                </button>
+                <button @click="aiKeyForm.provider = 'custom'" class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all" :class="aiKeyForm.provider === 'custom' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'">
+                  <svg class="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-200">Custom</span>
                 </button>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre / etiqueta</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
               <input v-model="aiKeyForm.label" placeholder="Ej: OpenAI produccion" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
             </div>
             <div>
@@ -721,24 +750,57 @@
                 </button>
               </div>
             </div>
+            <div v-if="aiKeyForm.provider === 'custom'">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Endpoint</label>
+              <input v-model="aiKeyForm.custom_endpoint" placeholder="https://your-api.com/v1" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+            </div>
+            <p v-if="aiKeyError" class="text-sm text-red-600">{{ aiKeyError }}</p>
+            <div class="flex items-center justify-end gap-3 pt-1">
+              <button @click="showAiKeyModal = false" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
+              <button @click="saveAiKey" :disabled="aiKeySaving" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">{{ aiKeySaving ? 'Guardando...' : 'Guardar' }}</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Add AI model modal -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showAiModelModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50" @click="showAiModelModal = false"></div>
+          <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Agregar modelo</h3>
+              <button @click="showAiModelModal = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Llave de API</label>
+              <select v-model="aiModelForm.ai_key_id" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500">
+                <option value="">Seleccionar llave...</option>
+                <option v-for="k in aiKeys" :key="k.id" :value="k.id">{{ k.label }} ({{ k.provider }})</option>
+              </select>
+            </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modelo</label>
               <div class="relative">
-                <select v-model="aiKeyForm.model" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" :disabled="aiLoadingModels">
+                <select v-model="aiModelForm.model" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" :disabled="aiLoadingModels">
                   <option value="">Seleccionar modelo...</option>
                   <option v-for="m in aiModalModels" :key="typeof m === 'string' ? m : m.id" :value="typeof m === 'string' ? m : m.id">{{ typeof m === 'string' ? m : (m.name || m.id) }}</option>
                 </select>
                 <svg v-if="aiLoadingModels" class="animate-spin h-4 w-4 text-gray-400 absolute right-8 top-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
               </div>
             </div>
-            <div v-if="aiKeyForm.provider === 'custom'">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Endpoint personalizado</label>
-              <input v-model="aiKeyForm.custom_endpoint" placeholder="https://your-api.com/v1/chat/completions" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Etiqueta (opcional)</label>
+              <input v-model="aiModelForm.label" :placeholder="aiModelForm.model || 'Nombre del modelo'" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500" />
             </div>
-            <p v-if="aiKeyError" class="text-sm text-red-600">{{ aiKeyError }}</p>
-            <div class="flex items-center justify-end gap-3 pt-2">
-              <button @click="showAiKeyModal = false" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
-              <button @click="saveAiKey" :disabled="aiKeySaving" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">{{ aiKeySaving ? 'Guardando...' : 'Guardar llave' }}</button>
+            <p v-if="aiModelError" class="text-sm text-red-600">{{ aiModelError }}</p>
+            <div class="flex items-center justify-end gap-3 pt-1">
+              <button @click="showAiModelModal = false" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
+              <button @click="saveAiModel" :disabled="aiModelSaving" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">{{ aiModelSaving ? 'Guardando...' : 'Agregar' }}</button>
             </div>
           </div>
         </div>
@@ -751,17 +813,28 @@
         <div v-if="showAiDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" @click="showAiDeleteModal = false"></div>
           <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-              <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-1">Eliminar llave</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              Seguro que quieres eliminar <strong class="text-gray-700 dark:text-gray-200">{{ aiDeleteTarget?.label }}</strong>?
-              <span v-if="aiDeleteTarget?.is_active" class="block mt-1 text-amber-600 dark:text-amber-400 font-medium">Esta es la llave activa. Se activara otra automaticamente.</span>
-            </p>
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Eliminar llave</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Esto tambien eliminara los modelos asociados a <strong>{{ aiDeleteTarget?.label }}</strong>.</p>
             <div class="flex items-center justify-center gap-3">
               <button @click="showAiDeleteModal = false" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
-              <button @click="deleteAiKey()" :disabled="aiDeleting" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">{{ aiDeleting ? 'Eliminando...' : 'Eliminar' }}</button>
+              <button @click="deleteAiKey()" :disabled="aiDeleting" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Delete AI model modal -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showAiModelDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50" @click="showAiModelDeleteModal = false"></div>
+          <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Eliminar modelo</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Quitar <strong>{{ aiModelDeleteTarget?.label || aiModelDeleteTarget?.model }}</strong> de tus favoritos?</p>
+            <div class="flex items-center justify-center gap-3">
+              <button @click="showAiModelDeleteModal = false" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
+              <button @click="deleteAiModel()" :disabled="aiDeleting" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">Eliminar</button>
             </div>
           </div>
         </div>
@@ -785,33 +858,46 @@ const aiUsageLoading = ref(false)
 // AI Keys state
 const aiKeys = ref([])
 const aiKeysLoading = ref(true)
-const aiTestingId = ref(null)
-const aiTestMsg = ref('')
-const aiTestSuccess = ref(false)
 const showAiKeyModal = ref(false)
 const showAiModalKey = ref(false)
 const aiKeySaving = ref(false)
 const aiKeyError = ref('')
-const aiLoadingModels = ref(false)
-const aiFetchedModels = ref(null)
-const aiKeyForm = ref({ provider: 'openai', label: '', api_key: '', model: '', custom_endpoint: '' })
+const aiKeyForm = ref({ provider: 'openai', label: '', api_key: '', custom_endpoint: '' })
 const showAiDeleteModal = ref(false)
 const aiDeleteTarget = ref(null)
 const aiDeleting = ref(false)
+
+// AI Models state
+const aiModels = ref([])
+const showAiModelModal = ref(false)
+const aiModelSaving = ref(false)
+const aiModelError = ref('')
+const aiModelForm = ref({ ai_key_id: '', model: '', label: '' })
+const showAiModelDeleteModal = ref(false)
+const aiModelDeleteTarget = ref(null)
+const aiLoadingModels = ref(false)
+const aiFetchedModels = ref(null)
+const aiTestMsg = ref('')
+const aiTestSuccess = ref(false)
 
 const aiFallbackModels = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano', 'gpt-4-turbo', 'o3-mini', 'o4-mini'],
   anthropic: ['claude-haiku-4-5-20250315', 'claude-sonnet-4-6-20250514', 'claude-opus-4-6-20250514'],
   gemini: ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'],
+  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
   custom: ['gpt-4o-mini', 'gpt-4o']
 }
+
+const selectedKeyForModel = computed(() => aiKeys.value.find(k => k.id === aiModelForm.value.ai_key_id))
 const aiModalModels = computed(() => {
+  const key = selectedKeyForModel.value
+  if (!key) return []
   if (aiFetchedModels.value?.length > 0) return aiFetchedModels.value
-  return aiFallbackModels[aiKeyForm.value.provider] || aiFallbackModels.custom
+  return aiFallbackModels[key.provider] || aiFallbackModels.custom
 })
 
 function aiProviderBg(provider) {
-  return { openai: 'bg-emerald-100 dark:bg-emerald-900/30', anthropic: 'bg-amber-100 dark:bg-amber-900/30', gemini: 'bg-blue-100 dark:bg-blue-900/30', custom: 'bg-purple-100 dark:bg-purple-900/30' }[provider] || 'bg-gray-100 dark:bg-gray-700'
+  return { openai: 'bg-emerald-100 dark:bg-emerald-900/30', anthropic: 'bg-amber-100 dark:bg-amber-900/30', gemini: 'bg-blue-100 dark:bg-blue-900/30', deepseek: 'bg-indigo-100 dark:bg-indigo-900/30', custom: 'bg-purple-100 dark:bg-purple-900/30' }[provider] || 'bg-gray-100 dark:bg-gray-700'
 }
 
 async function fetchAiKeys() {
@@ -819,55 +905,77 @@ async function fetchAiKeys() {
   try { aiKeys.value = (await api.get('/settings/ai-keys')).data.keys || [] } catch (e) { aiKeys.value = [] } finally { aiKeysLoading.value = false }
 }
 
-async function fetchAiModels() {
-  const p = aiKeyForm.value.provider
-  if (!p) return
+async function fetchAiModelsData() {
+  try { aiModels.value = (await api.get('/settings/ai-models')).data.models || [] } catch (e) { aiModels.value = [] }
+}
+
+async function fetchProviderModels() {
+  const key = selectedKeyForModel.value
+  if (!key) { aiFetchedModels.value = null; return }
   aiLoadingModels.value = true
   try {
-    const params = { provider: p }
-    const k = aiKeyForm.value.api_key
-    if (k && !k.startsWith('****')) params.api_key = k
-    const { data } = await api.get('/settings/models', { params })
+    const { data } = await api.get('/settings/models', { params: { ai_key_id: key.id } })
     aiFetchedModels.value = data.models?.length > 0 ? data.models : null
   } catch (e) { aiFetchedModels.value = null } finally { aiLoadingModels.value = false }
 }
 
-watch(() => aiKeyForm.value.provider, () => { aiKeyForm.value.model = ''; aiFetchedModels.value = null; fetchAiModels() })
-let aiKeyTimer = null
-watch(() => aiKeyForm.value.api_key, (v) => { clearTimeout(aiKeyTimer); if (v?.length > 10) aiKeyTimer = setTimeout(fetchAiModels, 800) })
+watch(() => aiModelForm.value.ai_key_id, () => { aiModelForm.value.model = ''; aiFetchedModels.value = null; fetchProviderModels() })
 
 function openAddKeyModal() {
-  aiKeyForm.value = { provider: 'openai', label: '', api_key: '', model: '', custom_endpoint: '' }
-  aiKeyError.value = ''; showAiModalKey.value = false; aiFetchedModels.value = null; showAiKeyModal.value = true; fetchAiModels()
+  aiKeyForm.value = { provider: 'openai', label: '', api_key: '', custom_endpoint: '' }
+  aiKeyError.value = ''; showAiModalKey.value = false; showAiKeyModal.value = true
+}
+
+function openAddModelModal() {
+  aiModelForm.value = { ai_key_id: aiKeys.value[0]?.id || '', model: '', label: '' }
+  aiModelError.value = ''; aiFetchedModels.value = null; showAiModelModal.value = true
+  fetchProviderModels()
 }
 
 async function saveAiKey() {
   if (!aiKeyForm.value.api_key) { aiKeyError.value = 'La API key es requerida'; return }
   aiKeySaving.value = true; aiKeyError.value = ''
   try {
-    await api.post('/settings/ai-keys', { label: aiKeyForm.value.label || `${aiKeyForm.value.provider} key`, provider: aiKeyForm.value.provider, api_key: aiKeyForm.value.api_key, model: aiKeyForm.value.model || (aiFallbackModels[aiKeyForm.value.provider]?.[0] || 'gpt-4o-mini'), custom_endpoint: aiKeyForm.value.custom_endpoint })
+    await api.post('/settings/ai-keys', { label: aiKeyForm.value.label || `${aiKeyForm.value.provider} key`, provider: aiKeyForm.value.provider, api_key: aiKeyForm.value.api_key, custom_endpoint: aiKeyForm.value.custom_endpoint })
     showAiKeyModal.value = false; await fetchAiKeys()
-    // Refresh settings form to reflect active key change
-    await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings }
   } catch (e) { aiKeyError.value = e.response?.data?.error || 'Error al guardar' } finally { aiKeySaving.value = false }
 }
 
-async function activateAiKey(id) {
-  try { await api.put(`/settings/ai-keys/${id}/activate`); await fetchAiKeys(); await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings } } catch (e) { alert('Error al activar llave') }
+async function saveAiModel() {
+  if (!aiModelForm.value.ai_key_id || !aiModelForm.value.model) { aiModelError.value = 'Selecciona llave y modelo'; return }
+  aiModelSaving.value = true; aiModelError.value = ''
+  try {
+    await api.post('/settings/ai-models', { ai_key_id: aiModelForm.value.ai_key_id, model: aiModelForm.value.model, label: aiModelForm.value.label || aiModelForm.value.model })
+    showAiModelModal.value = false; await fetchAiModelsData()
+    await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings }
+  } catch (e) { aiModelError.value = e.response?.data?.error || 'Error al guardar' } finally { aiModelSaving.value = false }
 }
 
-async function testAiKey(key) {
-  aiTestingId.value = key.id; aiTestMsg.value = ''
-  try { const { data } = await api.post('/settings/test-ai', { provider: key.provider, model: key.model }); aiTestSuccess.value = true; aiTestMsg.value = `${key.label}: Conexion exitosa (${data.response_time_ms}ms)` }
-  catch (e) { aiTestSuccess.value = false; aiTestMsg.value = `${key.label}: ${e.response?.data?.error || 'Error de conexion'}` }
-  finally { aiTestingId.value = null; setTimeout(() => aiTestMsg.value = '', 5000) }
+async function activateAiModel(id) {
+  try {
+    await api.put(`/settings/ai-models/${id}/activate`); await fetchAiModelsData()
+    await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings }
+  } catch (e) { alert('Error al activar modelo') }
 }
 
 async function deleteAiKey() {
   if (!aiDeleteTarget.value) return
   aiDeleting.value = true
-  try { await api.delete(`/settings/ai-keys/${aiDeleteTarget.value.id}`); showAiDeleteModal.value = false; aiDeleteTarget.value = null; await fetchAiKeys(); await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings } }
-  catch (e) { alert('Error al eliminar llave') } finally { aiDeleting.value = false }
+  try {
+    await api.delete(`/settings/ai-keys/${aiDeleteTarget.value.id}`); showAiDeleteModal.value = false; aiDeleteTarget.value = null
+    await fetchAiKeys(); await fetchAiModelsData()
+    await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings }
+  } catch (e) { alert('Error al eliminar') } finally { aiDeleting.value = false }
+}
+
+async function deleteAiModel() {
+  if (!aiModelDeleteTarget.value) return
+  aiDeleting.value = true
+  try {
+    await api.delete(`/settings/ai-models/${aiModelDeleteTarget.value.id}`); showAiModelDeleteModal.value = false; aiModelDeleteTarget.value = null
+    await fetchAiModelsData()
+    await settingsStore.fetchSettings(); if (settingsStore.settings) form.value = { ...settingsStore.settings }
+  } catch (e) { alert('Error al eliminar') } finally { aiDeleting.value = false }
 }
 
 const saving = ref(false)
@@ -1060,7 +1168,7 @@ onMounted(async () => {
     if (q.qr) settingsStore.qrCode = q.qr
   } catch (e) { /* ignore */ }
   // Fetch AI usage summary
-  fetchAiKeys()
+  fetchAiKeys().then(() => fetchAiModelsData())
   aiUsageLoading.value = true
   try {
     const { data } = await api.get('/usage', { params: { period: 'month' } })
