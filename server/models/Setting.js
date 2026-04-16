@@ -1,0 +1,40 @@
+const { DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
+  return sequelize.define('Setting', {
+    id:                       { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenantId:                 { type: DataTypes.INTEGER, allowNull: false, unique: true },
+    botName:                  { type: DataTypes.STRING(255), allowNull: false, defaultValue: 'SellMate' },
+    friendliness:             { type: DataTypes.INTEGER, allowNull: false, defaultValue: 7 },
+    greetingMessage:          { type: DataTypes.TEXT, allowNull: true },
+    farewellMessage:          { type: DataTypes.TEXT, allowNull: true },
+    aiProvider:               { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'openai' },
+    aiApiKey:                 { type: DataTypes.STRING(500), defaultValue: '' },
+    aiModel:                  { type: DataTypes.STRING(100), defaultValue: 'gpt-4o-mini' },
+    aiCustomEndpoint:         { type: DataTypes.STRING(500), defaultValue: '' },
+    whatsappConnected:        { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 },
+    whitelistMode:            { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'all' },
+    onlineStatus:             { type: DataTypes.TINYINT, allowNull: false, defaultValue: 1 },
+    businessType:             { type: DataTypes.STRING(50), allowNull: true },
+    setupCompleted:           { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 },
+    botAlwaysOn:              { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 },
+    currency:                 { type: DataTypes.STRING(10), defaultValue: 'MXN' },
+    timezone:                 { type: DataTypes.STRING(100), defaultValue: 'America/Mexico_City' },
+    aiConnectionMode:         { type: DataTypes.STRING(20), defaultValue: 'proxy' },
+    subscriptionTier:         { type: DataTypes.STRING(20), defaultValue: 'free' },
+    subscriptionStart:        { type: DataTypes.DATEONLY, allowNull: true },
+    monthlyTokenBudget:       { type: DataTypes.BIGINT, defaultValue: 0 },
+    monthlyTokensUsed:        { type: DataTypes.BIGINT, defaultValue: 0 },
+    monthlyConversationsUsed: { type: DataTypes.INTEGER, defaultValue: 0 },
+    billingCycleStart:        { type: DataTypes.DATEONLY, allowNull: true },
+    appointmentBufferMinutes: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    businessHours:            { type: DataTypes.TEXT, allowNull: true },
+    monthlySpendingLimit:     { type: DataTypes.DOUBLE, defaultValue: 0 },
+  }, {
+    tableName:   'settings',
+    underscored: true,
+    timestamps:  true,
+    createdAt:   false,
+    updatedAt:   'updated_at',
+  });
+};
