@@ -94,6 +94,18 @@ async function initDb() {
       // Drop old columns from ai_keys if they exist
       "ALTER TABLE ai_keys DROP COLUMN model",
       "ALTER TABLE ai_keys DROP COLUMN is_active",
+      // Refresh tokens for secure session management
+      `CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        tenant_id INT DEFAULT NULL,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_rt_token (token),
+        INDEX idx_rt_user (user_id)
+      )`,
     ];
     for (const sql of migrations) {
       try { await pool.execute(sql); } catch (e) { /* already exists */ }
